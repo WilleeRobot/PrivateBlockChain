@@ -73,7 +73,7 @@ class Blockchain {
                block.previousBlockHash = self.chain[self.chain.length-1].hash;
             }
             // hash the block and assign to block's hash
-            block.hash = SHA256(JSON.stringify(block)).toString;
+            block.hash = SHA256(JSON.stringify(block)).toString();
             // validateChain
             let errors = await self.validateChain();
             console.log(errors);
@@ -214,9 +214,8 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             self.chain.forEach(async block => {
                 // declare constants for each iteration
-
                 // Previous block constant
-                const chainPreviousBlockHash = self.chain[block.height - 1];
+                const chainPreviousBlockHash = self.chain[block.height - 1].hash;
                 // Result of block validation (boolean)
                 const isInvalidBlock = await !block.validate();
                 if(isInvalidBlock) {

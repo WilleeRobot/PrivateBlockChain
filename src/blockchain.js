@@ -64,26 +64,34 @@ class Blockchain {
     _addBlock(block) {
         let self = this;
         return new Promise(async (resolve, reject) => {
+            console.log(`[_addBlock] This is the block to add: ###${block}###`);
+            console.log(block);
             // set block height
             block.height = self.height + 1;
             // block timestamp
             block.time = new Date().getTime().toString().slice(0,-3);
-            // set block's previous block hash
-            if (self.height > -1) {
+            // set block's previous block hash if not genesis block
+            if (self.chain.length > 0) {
                block.previousBlockHash = self.chain[self.chain.length-1].hash;
             }
             // hash the block and assign to block's hash
             block.hash = SHA256(JSON.stringify(block)).toString();
             // validateChain
             let errors = await self.validateChain();
-            console.log(errors);
+            console.log(`[_addBlock] Errors from self.validateChain: ###${errors}###`);
+            console.log(`Length of errors array: ${errors.length}`);
             if (errors.length === 0) {
                 self.chain.push(block);
                 self.height++;
                 // resolve promise 
                 resolve(block);
+                console.log(`[_addBlock] Block validated/no errors. Block just added:`);
+                console.log(block)
+                console.log(`[_addBlock] Current state of chain: `);
+                console.log(this.chain)
             } else {
                 reject(errors);
+                console.log(`[_addBlock] Promise rejected: ${errors}`);
             }
         });
     }
@@ -125,12 +133,13 @@ class Blockchain {
             const messageTime = parseInt(message.split(':')[1]);
             let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
             let isExpired = (currentTime - messageTime) > 300;
+            console.log(`Timed out? ${isExpired}`);
             if (!isExpired) {
                 // verify message w/ wallet address & signature
                 let messageIsVerified = bitcoinMessage.verify(message, address, signature)
                 
                 if (!messageIsVerified) {
-                    return reject(new Error('Message unverified'));
+                    reject('Message unverified');
                 } else {
                     // create block and add to chain
                     const data = {
@@ -141,9 +150,9 @@ class Blockchain {
                     // resolve with the block added
                     await resolve(self._addBlock(newBlock))
                 }
-            } else {
-                return reject(new Error('Block must be added within 5 minutes of message time stamp.'))
-            }
+            } 
+            reject('Block must be added within 5 minutes of message time stamp.')
+            console.log("Time elapsed. More than 5 min passed.");
         });
     }
 
@@ -160,7 +169,7 @@ class Blockchain {
            if (block.length != 0) {
                resolve(block);
            } else {
-               reject(new Error("Block not found"));
+               reject("Block not found");
            }
         });
     }
@@ -213,18 +222,15 @@ class Blockchain {
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
             self.chain.forEach(async block => {
-                // declare constants for each iteration
-                // Previous block constant
-                const chainPreviousBlockHash = self.chain[block.height - 1].hash;
-                // Result of block validation (boolean)
+                console.log(`[validateChain()] Current block: ${block}`);
                 const isInvalidBlock = await !block.validate();
                 if(isInvalidBlock) {
                     errorLog.push({error: "Block validation failed"});
                 };
-                if(block.height < 1) {
-                    errorLog.push({error: "Genesis block does not need to be validated"});
-                } else if(block.previousBlockHash != chainPreviousBlockHash){
+                if(block.height > 1) {
+                    if(block.previousBlockHash != self.chain[block.height - 1].hash) {
                     errorLog.push({error: "Previous block hash does not match"});
+                    }
                 }
             })
             resolve(errorLog);

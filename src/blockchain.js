@@ -227,7 +227,7 @@ class Blockchain {
                 if(isInvalidBlock) {
                     errorLog.push({error: "Block validation failed"});
                 };
-                if(block.height > 1) {
+                if(self.chain.length > 0) {
                     if(block.previousBlockHash != self.chain[block.height - 1].hash) {
                     errorLog.push({error: "Previous block hash does not match"});
                     }

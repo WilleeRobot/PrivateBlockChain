@@ -81,7 +81,7 @@ class Block {
             if (bodyData && this.height > 0) {
                 resolve(bodyData);
             } else {
-                reject("This is a genesis block")
+                resolve(false)
             }
         })
     }

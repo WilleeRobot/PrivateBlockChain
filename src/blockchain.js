@@ -222,12 +222,13 @@ class Blockchain {
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
             self.chain.forEach(async block => {
-                console.log(`[validateChain()] Current block: ${block}`);
+                console.log("[in validateChain()] Current block:");
+                console.log(block);
                 const isInvalidBlock = await !block.validate();
                 if(isInvalidBlock) {
                     errorLog.push({error: "Block validation failed"});
                 };
-                if(self.chain.length > 0) {
+                if(block.height > 0) {
                     if(block.previousBlockHash != self.chain[block.height - 1].hash) {
                     errorLog.push({error: "Previous block hash does not match"});
                     }
